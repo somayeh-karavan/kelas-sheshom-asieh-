@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>کلاس ششم آسیه</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
+const customGameQuestions=[];
+function renderGameBuilder(){
+  const t=$('gameTypeBuilder').value, box=$('gameBuilderFields');
+  let extra='';
+  if(t==='mcq') extra=`<div class="field"><label>گزینه ۱</label><input id="g1"></div><div class="field"><label>گزینه ۲</label><input id="g2"></div><div class="field"><label>گزینه ۳</label><input id="g3"></div><div class="field"><label>گزینه ۴</label><input id="g4"></div><div class="field"><label>شماره گزینه صحیح (۱ تا ۴)</label><input id="gans" type="number" min="1" max="4"></div>`;
+  else if(t==='tf') extra=`<div class="field"><label>پاسخ صحیح</label><select id="gans"><option value="true">درست</option><option value="false">نادرست</option></select></div>`;
+  else if(t==='sentence') extra=`<div class="field"><label>کلمه یا عبارت هدف</label><input id="gans" placeholder="مثلاً: مدرسه"></div>`;
+  else extra=`<div class="field"><label>پاسخ صحیح</label><input id="gans" placeholder="مثلاً 24"></div>`;
+  box.innerHTML=`<div class="field"><label>متن سؤال</label><input id="gq" placeholder="سؤال را بنویسید..."></div>${extra}`;
+}
+function addGameQuestion(){
+  const t=$('gameTypeBuilder').value, q=$('gq')?.value.trim();
+  if(!q)return toast('متن سؤال را وارد کنید.',false);
+  let data={type:t,q,answer:$('gans')?.value||''};
+  if(t==='mcq')data.options=[$('g1').value,$('g2').value,$('g3').value,$('g4').value];
+  customGameQuestions.push(data);
+  $('gameQuestionList').innerHTML=customGameQuestions.map((x,i)=>`<div class="game-box" style="text-align:right"><b>${i+1}. ${x.q}</b><br><span class="muted">${x.type==='mcq'?'چهارگزینه‌ای':x.type==='tf'?'درست/نادرست':x.type==='sentence'?'جمله‌سازی':x.type==='geometry'?'هندسه':x.type==='multiply'?'ضرب':'تقسیم'}</span></div>`).join('');
+  ['gq','g1','g2','g3','g4','gans'].forEach(id=>{if($(id))$(id).value=''});
+}
+async function saveCustomGame(){
+  if(!customGameQuestions.length)return toast('حداقل یک سؤال اضافه کنید.',false);
+  const title=({multiply:'بازی ضرب',divide:'بازی تقسیم',geometry:'بازی هندسه',mcq:'بازی چهارگزینه‌ای',tf:'بازی درست یا نادرست',sentence:'بازی جمله‌سازی'})[$('gameTypeBuilder').value];
+  const payload={
+    title, description:'بازی آموزشی ساخته‌شده توسط معلم',
+    content_type:'game', status:'published',
+    game_type:$('gameTypeBuilder').value,
+    game_data:customGameQuestions
+  };
+  const {error}=await sb.from('content').insert(payload);
+  if(error){toast('ذخیره بازی انجام نشد: '+error.message,false);return}
+  customGameQuestions.length=0;$('gameQuestionList').innerHTML='';
+  toast('بازی با موفقیت منتشر شد 🎮🌷');
+  if(typeof renderTeacher==='function')await renderTeacher();
+}
+renderGameBuilder();testQuestionTypeChanged();
+</script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Tahoma,Arial,sans-serif;background:linear-gradient(135deg,#fff3fa,#f3efff,#edfcf7);color:#4e4057;min-height:100vh}.wrap{max-width:1150px;margin:auto;padding:18px}.brand{text-align:center}.brand .logo{font-size:44px}.card{background:#ffffffee;border-radius:24px;padding:20px;margin:14px 0;box-shadow:0 10px 30px rgba(116,85,122,.10)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}.input,.select,.area{width:100%;padding:12px;border:1px solid #eaddec;border-radius:14px;margin:5px 0;background:#fff;font:inherit}.area{min-height:90px}.btn{border:0;border-radius:14px;padding:11px 15px;margin:4px;cursor:pointer;background:#edbfd6;color:#4e4057;font:inherit}.purple{background:#ddd0f4}.green{background:#cceee1}.yellow{background:#f7e5a8}.red{background:#f0c9d1}.blue{background:#cfe6f6}.hidden{display:none!important}.nav{display:flex;flex-wrap:wrap;gap:7px}.nav button{border:0;border-radius:13px;padding:10px 13px;background:#fff;cursor:pointer;font:inherit}.active{background:#dfc9ee!important}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.stat{text-align:center;background:#fff;border-radius:18px;padding:15px}.stat b{display:block;font-size:24px;margin:4px}.row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:12px;border-bottom:1px solid #eee}.muted{color:#8d7b95;font-size:13px}.student{background:#fff;border-radius:16px;padding:13px;margin:7px 0}.pill{display:inline-block;padding:5px 9px;border-radius:99px;background:#f1e7f5;font-size:12px}.ok{background:#e3f5ea}.err{background:#fae2e6}.toast{position:fixed;left:16px;bottom:16px;max-width:420px;background:#fff;padding:14px 16px;border-radius:16px;box-shadow:0 8px 25px #0002;z-index:50}.small{font-size:12px}.setup-box{max-width:650px;margin:50px auto}.danger-note{background:#fff2f4;border-radius:14px;padding:12px;font-size:13px}.section-title{display:flex;justify-content:space-between;align-items:center;gap:8px}.modal{position:fixed;inset:0;background:#0005;display:flex;align-items:center;justify-content:center;padding:16px;z-index:40}.modal .card{max-width:720px;width:100%;max-height:92vh;overflow:auto}.preview{max-width:100%;max-height:300px;border-radius:18px;display:block;margin:10px auto;object-fit:contain}.media-box{background:#faf6fd;border-radius:18px;padding:14px;margin:10px 0}.game-box{background:#fff7dc;border-radius:20px;padding:18px;text-align:center}.game-number{font-size:34px;font-weight:bold;margin:15px}.option-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.option-grid button{padding:14px;border:0;border-radius:16px;background:#fff;font:inherit;cursor:pointer;box-shadow:0 3px 10px #0001}.tag{margin:3px}.file-label{display:block;border:2px dashed #e4cde8;border-radius:18px;padding:16px;text-align:center;background:#fff8fd;cursor:pointer;margin:7px 0}.hint{background:#f4f0fb;border-radius:14px;padding:10px;font-size:13px}.content-card{background:#fff;border-radius:18px;padding:15px;margin:9px 0}.actions{display:flex;flex-wrap:wrap;gap:4px}.check{display:flex;gap:8px;align-items:center;margin:8px 0}.check input{width:18px;height:18px}@media(max-width:650px){.stats{grid-template-columns:repeat(2,1fr)}.row{flex-direction:column;align-items:flex-start}.wrap{padding:10px}.option-grid{grid-template-columns:1fr}}
+
+.game-box{background:linear-gradient(135deg,#fff7fc,#f6f1ff);border:1px solid #eadcf2;border-radius:22px;padding:18px;margin:14px 0;text-align:center}
+.game-top{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.game-badge{background:#fff;border-radius:999px;padding:7px 12px;box-shadow:0 4px 12px rgba(100,70,120,.08)}
+.game-number{font-size:28px;font-weight:700;margin:18px 0}
+.game-progress{height:10px;background:#eee5f4;border-radius:99px;overflow:hidden;margin:12px 0}
+.game-progress>span{display:block;height:100%;width:0%;background:#d7b8ec;border-radius:99px;transition:width .25s}
+.game-options{display:grid;grid-template-columns:repeat(2,minmax(100px,1fr));gap:10px;max-width:520px;margin:14px auto}
+.game-options button{border:0;border-radius:16px;padding:14px;background:#fff;box-shadow:0 5px 16px rgba(100,70,120,.10);font-size:18px;cursor:pointer}
+.game-options button:disabled{opacity:.6}
+.game-result{font-size:18px;line-height:2;background:#fff;border-radius:18px;padding:14px;margin-top:12px}
+@media(max-width:500px){.game-options{grid-template-columns:1fr 1fr}.game-number{font-size:24px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="brand"><div class="logo">🌸🦋📚✨</div><h1>سامانه یادگیری کلاس ششم آسیه</h1><p>👩‍🏫 سمیه کاروان</p></header>
+
+<section id="setup" class="card setup-box hidden">
+<h2>🔗 اتصال به Supabase</h2><p>آدرس پروژه و <b>Publishable Key</b> را از صفحه Connect یا Settings → API Keys وارد کن.</p>
+<label>Project URL</label><input id="cfgUrl" class="input" placeholder="https://xxxxxxxx.supabase.co">
+<label>Publishable Key</label><input id="cfgKey" class="input" placeholder="sb_publishable_...">
+
+<button class="btn purple" onclick="saveConfig()">ذخیره و اتصال 🌷</button><button class="btn" onclick="clearConfig()">پاک‌کردن تنظیمات</button>
+<div class="danger-note">🔐 کلید <b>sb_secret_...</b> را اینجا وارد نکن. این برنامه فقط به Publishable Key نیاز دارد.</div>
+</section>
+
+<section id="login" class="card hidden"><div class="grid"><div><h2>👩🏻‍🏫 ورود معلم</h2><input id="loginEmail" class="input" type="email" placeholder="ایمیل ورود"><input id="loginPass" class="input" type="password" placeholder="رمز عبور"><button class="btn purple" onclick="login()">ورود به کلاس 🌸</button><p class="muted">حساب معلمی ساخته‌شده در Supabase را وارد کن.</p></div><div><h2>👧🏻 دانش‌آموز</h2><p>دانش‌آموز با حساب Auth خودش وارد می‌شود و فقط محتوای مجاز کلاس را می‌بیند.</p><span class="pill">نسخه متصل به دیتابیس واقعی</span></div></div><button class="btn blue" onclick="showSetup()">⚙️ تغییر تنظیمات اتصال</button></section>
+
+<section id="app" class="hidden"><div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><h2 id="hello"></h2><span id="sub" class="muted"></span></div><button class="btn red" onclick="logout()">خروج</button></div>
+<div id="tn" class="nav hidden"><button onclick="tab('home',this)" class="active">🏠 خانه</button><button onclick="tab('students',this)">👧 دانش‌آموزان</button><button onclick="tab('content',this)">📚 محتوا</button><button onclick="tab('tests',this)">🧠 آزمون‌ها</button><button onclick="tab('reports',this)">📊 گزارش‌ها</button></div>
+<div id="sn" class="nav hidden"><button onclick="tab('today',this)" class="active">🏠 امروز من</button><button onclick="tab('activities',this)">📚 فعالیت‌ها</button><button onclick="tab('studentTests',this)">🧠 آزمون‌ها</button><button onclick="tab('progress',this)">🌟 پیشرفت</button></div></div>
+
+<div id="home" class="page"><div class="stats"><div class="stat">دانش‌آموز<b id="sc">—</b>👧</div><div class="stat">فعالیت<b id="pc">—</b>🌱</div><div class="stat">محتوا<b id="cc">—</b>📚</div><div class="stat">آزمون<b id="tc">—</b>🧠</div></div><div class="grid"><div class="card"><h3>🌷 دسترسی سریع</h3><button class="btn" onclick="tab('content')">➕ افزودن محتوا</button><button class="btn green" onclick="tab('students')">👧 دانش‌آموزان</button><button class="btn purple" onclick="tab('tests')">🧠 ساخت آزمون</button></div><div class="card"><h3>💡 وضعیت اتصال</h3><p id="statusText">در حال خواندن اطلاعات...</p></div></div></div>
+
+<div id="students" class="page hidden">
+<div class="card">
+  <div class="section-title"><h2>👧 دانش‌آموزان کلاس</h2><div><span class="pill">۳۰ نفر کلاس</span><button class="btn purple" onclick="openAddStudent()">➕ افزودن دانش‌آموز</button></div></div>
+  <div class="grid">
+    <input id="studentSearch" class="input" placeholder="🔎 جست‌وجوی نام یا نام کاربری" oninput="renderStudents()">
+    <select id="studentStatusFilter" class="select" onchange="renderStudents()">
+      <option value="all">همه دانش‌آموزان</option><option value="active">فعال</option><option value="inactive">غیرفعال</option>
+    </select>
+  </div>
+  <div class="hint">از اینجا می‌توانی پرونده هر دانش‌آموز، میزان فعالیت، آزمون‌ها و بازخوردهای او را ببینی. 🌷</div>
+  <div id="studentSummary" class="stats"></div>
+  <div id="sl"></div>
+</div>
+<div id="addStudentModal" class="modal hidden"><div class="card">
+  <div class="section-title"><h2>➕ افزودن دانش‌آموز</h2><button class="btn red" onclick="closeAddStudent()">بستن ✕</button></div>
+  <div class="hint">حساب از داخل پنل ساخته می‌شود. رمز عبور را خودت تعیین کن و برای دانش‌آموز نگه دار. 🔐</div>
+  <label>نام و نام خانوادگی</label><input id="newStudentName" class="input" placeholder="مثلاً نازنین احمدی">
+  <label>نام کاربری</label><input id="newStudentUsername" class="input" placeholder="مثلاً nazanin">
+  <label>رمز عبور</label><input id="newStudentPassword" class="input" type="password" minlength="6" placeholder="حداقل ۶ کاراکتر">
+  <button class="btn green" onclick="createStudentAccount()">🌸 ساخت حساب دانش‌آموز</button>
+  <div id="newStudentResult" class="hint hidden"></div>
+</div></div>
+<div id="studentModal" class="modal hidden"><div class="card">
+  <div class="section-title"><h2 id="studentModalTitle">👧 پرونده دانش‌آموز</h2><button class="btn red" onclick="closeStudentModal()">بستن ✕</button></div>
+  <div id="studentProfileBox"></div>
+  <div class="grid">
+    <textarea id="feedbackText" class="area" placeholder="بازخورد یا پیام معلم برای این دانش‌آموز..."></textarea>
+    <div>
+      <input id="feedbackPoints" class="input" type="number" min="0" value="0" placeholder="امتیاز تشویقی (اختیاری)">
+      <button class="btn purple" onclick="sendStudentFeedback()">💌 ارسال بازخورد</button>
+    </div>
+  </div>
+  <div id="studentFeedbackList"></div>
+</div></div>
+</div>
+
+<div id="content" class="page hidden"><div class="card"><div class="section-title"><h2>📚 مدیریت محتوای کلاس</h2><span id="editBadge" class="pill hidden">در حال ویرایش</span></div>
+<div class="hint">اینجا می‌توانی عکس کتاب، PDF، فایل آموزشی، لینک ویدئو و بازی داخلی را برای دانش‌آموزها منتشر کنی. 🌷</div>
+<div class="grid"><select id="ct" class="select" onchange="contentTypeChanged()"><option value="homework">📝 تکلیف</option><option value="video">🎬 ویدئوی آموزشی</option><option value="game">🎮 بازی آموزشی</option><option value="lesson">📖 درس</option><option value="material">📚 مطلب</option></select><input id="title" class="input" placeholder="عنوان"><input id="points" class="input" type="number" min="0" value="10" placeholder="امتیاز"><input id="publishAt" class="input" type="datetime-local"><input id="deadlineAt" class="input" type="datetime-local"></div>
+<textarea id="desc" class="area" placeholder="توضیح کوتاه"></textarea>
+<div id="videoWrap"><label>🎬 لینک ویدئو (اختیاری)</label><input id="videoUrl" class="input" placeholder="مثلاً لینک YouTube یا ویدئوی آموزشی"></div>
+<div id="gameWrap">
+<label>🎮 نوع بازی</label>
+<select id="gameKind" class="select" onchange="gameKindChanged()">
+<option value="number_patterns">الگوهای عددی 🔢</option>
+<option value="fast_math">جمع و تفریق سریع ➕➖</option>
+<option value="multiply">ضرب ✖️</option>
+<option value="divide">تقسیم ➗</option>
+<option value="geometry">هندسه 📐</option>
+<option value="mcq">چهارگزینه‌ای 🧠</option>
+<option value="tf">درست / نادرست ✅</option>
+<option value="sentence">جمله‌سازی 📝</option>
+<option value="external">بازی خارجی با لینک 🔗</option>
+</select>
+<input id="gameUrl" class="input" placeholder="اگر بازی خارجی است، لینک بازی را وارد کن">
+<div id="customGameBuilder" class="game-box hidden" style="margin-top:12px;text-align:right">
+  <h3>🧩 سؤال‌های بازی</h3>
+  <div class="field"><label>متن سؤال</label><input id="customQ" class="input" placeholder="مثلاً حاصل ۷ × ۸ چند است؟"></div>
+  <div id="customExtra"></div>
+  <button class="btn purple" type="button" onclick="addCustomQuestion()">➕ افزودن سؤال</button>
+  <div id="customQuestionList"></div>
+</div>
+</div>
+<div><label class="file-label">🖼️ انتخاب عکس کتاب یا تصویر آموزشی<input id="mediaFile" type="file" accept="image/*,application/pdf,audio/*" hidden onchange="previewFile()"></label><div id="fileInfo" class="muted">هنوز فایلی انتخاب نشده است.</div><img id="imagePreview" class="preview hidden"></div>
+<div class="actions"><button class="btn" onclick="saveContent('published')">انتشار محتوا 🌸</button><button class="btn yellow" onclick="saveContent('draft')">ذخیره پیش‌نویس 🌷</button><button id="cancelEdit" class="btn blue hidden" onclick="resetForm()">لغو ویرایش</button></div>
+<div id="cl"></div></div></div>
+
+<div id="tests" class="page hidden">
+<div class="card">
+  <div class="section-title"><h2>🧠 ساخت و مدیریت آزمون</h2><span class="pill">آزمون‌های واقعی</span></div>
+  <p class="muted">سؤال‌های چهارگزینه‌ای، درست/نادرست و تشریحی را اضافه کن. پاسخ صحیح در بخش خصوصی دیتابیس نگهداری می‌شود.</p>
+  <div class="grid">
+    <input id="testTitle" class="input" placeholder="عنوان آزمون">
+    <input id="testMinutes" class="input" type="number" min="1" placeholder="زمان آزمون (دقیقه)">
+    <input id="testScore" class="input" type="number" min="0" value="0" placeholder="نمره کل">
+    <input id="testPublishAt" class="input" type="datetime-local">
+    <input id="testDeadline" class="input" type="datetime-local">
+  </div>
+  <textarea id="testDesc" class="area" placeholder="توضیح آزمون"></textarea>
+  <div class="game-box" style="text-align:right">
+    <h3>➕ افزودن سؤال</h3>
+    <select id="testQType" class="select" onchange="testQuestionTypeChanged()">
+      <option value="multiple_choice">🧠 چهارگزینه‌ای</option>
+      <option value="true_false">✅ درست / نادرست</option>
+      <option value="essay">📝 تشریحی</option>
+    </select>
+    <input id="testQText" class="input" placeholder="متن سؤال">
+    <input id="testQScore" class="input" type="number" min="0" value="1" placeholder="نمره سؤال">
+    <div id="testQExtra"></div>
+    <button class="btn purple" type="button" onclick="addTestQuestion()">➕ افزودن سؤال</button>
+    <div id="testQuestionList"></div>
+  </div>
+  <button class="btn green" type="button" onclick="publishTest()">🌸 انتشار آزمون</button>
+  <button class="btn" type="button" onclick="saveTestDraft()">💾 ذخیره پیش‌نویس</button>
+  <div id="tl" style="margin-top:16px"></div>
+</div>
+</div>
+<div id="studentTests" class="page hidden">
+  <div class="card"><div class="section-title"><h2>🧠 آزمون‌های من</h2><span class="pill">آماده‌ای؟ 🌷</span></div><div id="studentTestList"></div></div>
+</div>
+<div id="reports" class="page hidden"><div class="card"><h2>📊 گزارش فعالیت</h2><div class="stats"><div class="stat">تکلیف<b id="rHomework">—</b></div><div class="stat">ویدئو<b id="rVideo">—</b></div><div class="stat">آزمون<b id="rTests">—</b></div><div class="stat">کل فعالیت<b id="rAll">—</b></div></div><p class="muted">گزارش‌ها بر اساس داده‌های واقعی ذخیره‌شده در Supabase ساخته می‌شوند.</p></div></div>
+<div id="today" class="page hidden"><div class="card"><h2>🌸 فعالیت‌های امروز من</h2><div id="todayList"></div></div></div><div id="activities" class="page hidden"><div class="card"><h2>📚 فعالیت‌های من</h2><div id="studentContent"></div></div></div><div id="progress" class="page hidden"><div class="card"><h2>🌟 پیشرفت من</h2><div id="progressBox"></div></div></div>
+</section></div>
+<div id="toast" class="toast hidden"></div><div id="viewer" class="modal hidden"><div class="card"><div class="section-title"><h2 id="viewerTitle">محتوا</h2><button class="btn red" onclick="closeViewer()">بستن ✕</button></div><div id="viewerBody"></div></div></div>
+
+<script>
+let sb=null,currentProfile=null,currentRole=null,editingId=null,selectedMediaUrl=null,selectedMediaName=null;
+const $=id=>document.getElementById(id);
+function toast(msg,ok=true){const t=$('toast');t.textContent=msg;t.className='toast '+(ok?'ok':'err');clearTimeout(window._toast);window._toast=setTimeout(()=>t.classList.add('hidden'),4000)}
+function getConfig(){return{url:localStorage.getItem('asieh_supabase_url')||'',key:localStorage.getItem('asieh_supabase_key')||''}}
+function init(){const c=getConfig();if(c.url&&c.key){sb=supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});$('login').classList.remove('hidden');resume()}else $('setup').classList.remove('hidden')}
+function showSetup(){$('login').classList.add('hidden');$('setup').classList.remove('hidden');const c=getConfig();$('cfgUrl').value=c.url;$('cfgKey').value=c.key}
+function saveConfig(){const url=$('cfgUrl').value.trim(),key=$('cfgKey').value.trim();if(!url||!key)return toast('هر دو مقدار را وارد کن.',false);if(!url.startsWith('https://'))return toast('Project URL باید با https:// شروع شود.',false);if(key.startsWith('sb_secret_'))return toast('کلید secret را وارد نکن. Publishable Key لازم است.',false);localStorage.setItem('asieh_supabase_url',url);localStorage.setItem('asieh_supabase_key',key);sb=supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});$('setup').classList.add('hidden');$('login').classList.remove('hidden');toast('اتصال تنظیم شد. حالا وارد حساب شو.')}
+function clearConfig(){localStorage.removeItem('asieh_supabase_url');localStorage.removeItem('asieh_supabase_key');location.reload()}
+async function login(){const email=$('loginEmail').value.trim(),password=$('loginPass').value;if(!email||!password)return toast('ایمیل و رمز عبور را وارد کن.',false);const{data,error}=await sb.auth.signInWithPassword({email,password});if(error)return toast('ورود انجام نشد: '+error.message,false);await loadSession(data.user)}
+async function resume(){const{data}=await sb.auth.getSession();if(data.session)await loadSession(data.session.user)}
+async function loadSession(user){const{data,error}=await sb.from('profiles').select('id,username,full_name,role,is_active').eq('id',user.id).single();if(error)return toast('پروفایل کاربر پیدا نشد: '+error.message,false);if(!data.is_active)return toast('این حساب غیرفعال است.',false);currentProfile=data;currentRole=data.role;$('login').classList.add('hidden');$('setup').classList.add('hidden');$('app').classList.remove('hidden');$('hello').textContent='سلام '+(data.full_name||data.username||'دوست من')+' 🌷';$('sub').textContent=data.role==='teacher'?'پنل مدیریت کلاس':'پنل شخصی دانش‌آموز';$('tn').classList.toggle('hidden',data.role!=='teacher');$('sn').classList.toggle('hidden',data.role!=='student');$('statusText').textContent='اتصال موفق است و اطلاعات از Supabase خوانده می‌شود. 🌱';if(data.role==='teacher'){tab('home');await renderTeacher()}else{tab('today');await renderStudent()}}
+async function logout(){await sb.auth.signOut();location.reload()}
+function tab(id,b){document.querySelectorAll('.page').forEach(x=>x.classList.add('hidden'));$(id).classList.remove('hidden');if(b){b.parentElement.querySelectorAll('button').forEach(x=>x.classList.remove('active'));b.classList.add('active')}if(currentRole==='teacher'){if(id==='students')renderStudents();if(id==='content')renderContent();if(id==='tests')renderTests();if(id==='reports')renderReports()}else{if(id==='today'||id==='activities')renderStudent();if(id==='studentTests')renderStudentTests();if(id==='progress')renderProgress()}}
+async function renderTeacher(){await renderStudents();await renderContent();await renderTests();await renderReports()}
+
+let selectedStudent=null;
+function openAddStudent(){$('newStudentName').value='';$('newStudentUsername').value='';$('newStudentPassword').value='';$('newStudentResult').classList.add('hidden');$('addStudentModal').classList.remove('hidden')}
+function closeAddStudent(){$('addStudentModal').classList.add('hidden')}
+async function createStudentAccount(){
+ const full_name=$('newStudentName').value.trim(), username=$('newStudentUsername').value.trim().toLowerCase(), password=$('newStudentPassword').value;
+ if(!full_name||!username||!password)return toast('نام، نام کاربری و رمز عبور را کامل وارد کن.',false);
+ if(!/^[a-z0-9_]{3,30}$/.test(username))return toast('نام کاربری فقط با حروف انگلیسی، عدد و _ و حداقل ۳ کاراکتر باشد.',false);
+ if(password.length<6)return toast('رمز عبور باید حداقل ۶ کاراکتر باشد.',false);
+ const {data:{session}}=await sb.auth.getSession(); if(!session)return toast('نشست معلم پیدا نشد. دوباره وارد شو.',false);
+
+ try{
+   const r=await fetch(`${getConfig().url}/functions/v1/create-student`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':getConfig().key},body:JSON.stringify({full_name,username,password})});
+   const body=await r.json().catch(()=>({})); if(!r.ok)throw new Error(body.error||'ساخت حساب ناموفق بود.');
+   $('newStudentResult').innerHTML=`✅ حساب <b>${esc(full_name)}</b> ساخته شد.<br>نام کاربری: <b>${esc(username)}</b><br>رمز عبور: <b>${esc(password)}</b><br><span class="small">این اطلاعات را برای دانش‌آموز نگه دار.</span>`;$('newStudentResult').classList.remove('hidden'); toast('حساب دانش‌آموز با موفقیت ساخته شد 🌸'); await renderStudents();
+ }catch(e){toast('ساخت حساب ناموفق بود: '+e.message,false)}
+}
+async function renderStudents(){
+ const {data,error}=await sb.from('profiles').select('id,username,full_name,role,is_active').eq('role','student').order('full_name');
+ if(error)return toast('خواندن دانش‌آموزان ناموفق بود: '+error.message,false);
+ const q=($('studentSearch')?.value||'').trim().toLowerCase(), f=$('studentStatusFilter')?.value||'all';
+ const all=data||[], filtered=all.filter(s=>(f==='all'||(f==='active'?s.is_active:!s.is_active)) && (!q||((s.full_name||'').toLowerCase().includes(q)||(s.username||'').toLowerCase().includes(q))));
+ $('sc').textContent=all.length;
+ const active=all.filter(x=>x.is_active).length;
+ $('studentSummary').innerHTML=`<div class="stat">کل<b>${all.length}</b>👧</div><div class="stat">فعال<b>${active}</b>🌱</div><div class="stat">غیرفعال<b>${all.length-active}</b>💤</div><div class="stat">نمایش<b>${filtered.length}</b>🔎</div>`;
+ $('sl').innerHTML=filtered.map(s=>`<div class="student"><div class="section-title"><div><b>👧 ${esc(s.full_name||'بدون نام')}</b><div class="muted">نام کاربری: ${esc(s.username||'—')} · ${s.is_active?'فعال':'غیرفعال'}</div></div><div class="actions"><button class="btn purple" onclick="openStudent('${s.id}')">پرونده 📋</button><button class="btn ${s.is_active?'red':'green'}" onclick="toggleStudent('${s.id}',${s.is_active})">${s.is_active?'غیرفعال‌سازی':'فعال‌سازی'}</button></div></div></div>`).join('')||'<p class="muted">دانش‌آموزی مطابق جست‌وجو پیدا نشد. 🌷</p>';
+}
+async function toggleStudent(id,active){
+ const {error}=await sb.from('profiles').update({is_active:!active}).eq('id',id);
+ if(error)return toast('تغییر وضعیت ناموفق بود: '+error.message,false);
+ toast(active?'حساب دانش‌آموز غیرفعال شد.':'حساب دانش‌آموز فعال شد. 🌷');await renderStudents();
+}
+async function openStudent(id){
+ const {data:s,error}=await sb.from('profiles').select('id,username,full_name,is_active,created_at').eq('id',id).single();
+ if(error)return toast('پرونده باز نشد: '+error.message,false);
+ selectedStudent=s;
+ const [{data:prog},{data:attempts},{data:feedbacks}]=await Promise.all([
+   sb.from('content_progress').select('id,status,progress_percent,game_score,attempt_count,last_activity_at,completed_at,content_id').eq('student_id',id).order('last_activity_at',{ascending:false}),
+   sb.from('test_attempts').select('id,test_id,score,max_score,status,started_at,submitted_at').eq('student_id',id).order('started_at',{ascending:false}),
+   sb.from('feedback').select('id,message,points,created_at,created_by').eq('student_id',id).order('created_at',{ascending:false})
+ ]);
+ const completed=(prog||[]).filter(x=>x.status==='completed').length, started=(prog||[]).filter(x=>x.status==='started').length;
+ const testCount=(attempts||[]).length, testAvg=testCount?Math.round((attempts||[]).reduce((a,x)=>a+(Number(x.score)||0),0)/testCount):0;
+ $('studentModalTitle').textContent='👧 '+(s.full_name||s.username||'پرونده دانش‌آموز');
+ $('studentProfileBox').innerHTML=`<div class="grid">
+   <div class="stat">وضعیت<b>${s.is_active?'فعال':'غیرفعال'}</b>🌱</div>
+   <div class="stat">فعالیت کامل‌شده<b>${completed}</b>✅</div>
+   <div class="stat">فعالیت شروع‌شده<b>${started}</b>📚</div>
+   <div class="stat">آزمون‌ها<b>${testCount}</b>🧠</div>
+ </div><div class="hint">نام کاربری: <b>${esc(s.username||'—')}</b> · میانگین امتیاز آزمون‌ها: <b>${testAvg}</b></div>`;
+ $('studentFeedbackList').innerHTML=`<h3>💌 بازخوردهای قبلی</h3>`+((feedbacks||[]).map(f=>`<div class="content-card"><b>${esc(f.message)}</b><div class="muted">${new Date(f.created_at).toLocaleString('fa-IR')} · امتیاز تشویقی: ${f.points||0}</div></div>`).join('')||'<p class="muted">هنوز بازخوردی ثبت نشده است.</p>')+
+ `<h3>🧠 آخرین آزمون‌ها</h3>`+((attempts||[]).slice(0,5).map(a=>`<div class="row"><span>آزمون</span><b>${a.score??'—'} از ${a.max_score??'—'}</b></div>`).join('')||'<p class="muted">هنوز آزمونی ثبت نشده است.</p>');
+ $('feedbackText').value='';$('feedbackPoints').value=0;$('studentModal').classList.remove('hidden');
+}
+function closeStudentModal(){selectedStudent=null;$('studentModal').classList.add('hidden')}
+async function sendStudentFeedback(){
+ if(!selectedStudent)return;
+ const message=$('feedbackText').value.trim(), points=Number($('feedbackPoints').value||0);
+ if(!message)return toast('متن بازخورد را وارد کن.',false);
+ const {error}=await sb.from('feedback').insert({student_id:selectedStudent.id,created_by:currentProfile.id,message,points});
+ if(error)return toast('ارسال بازخورد ناموفق بود: '+error.message,false);
+ toast('بازخورد برای دانش‌آموز ارسال شد 💌');await openStudent(selectedStudent.id);
+}
+
+function contentTypeChanged(){const t=$('ct').value;$('videoWrap').classList.toggle('hidden',t!=='video');$('gameWrap').classList.toggle('hidden',t!=='game')}
+function previewFile(){const f=$('mediaFile').files[0];if(!f){$('fileInfo').textContent='هنوز فایلی انتخاب نشده است.';return}if(f.size>15*1024*1024)return toast('برای این نسخه فایل باید حداکثر ۱۵ مگابایت باشد.',false);$('fileInfo').textContent=`${f.name} · ${Math.round(f.size/1024)} کیلوبایت`;$('imagePreview').classList.toggle('hidden',!f.type.startsWith('image/'));if(f.type.startsWith('image/'))$('imagePreview').src=URL.createObjectURL(f)}
+async function uploadMedia(){const f=$('mediaFile').files[0];if(!f)return{url:selectedMediaUrl,name:selectedMediaName};if(f.size>15*1024*1024)throw new Error('حداکثر اندازه فایل ۱۵ مگابایت است.');const safe=f.name.replace(/[^a-zA-Z0-9._-]+/g,'_');const path=`${currentProfile.id}/${Date.now()}_${safe}`;const{error}=await sb.storage.from('class-materials').upload(path,f,{upsert:false,contentType:f.type||undefined});if(error)throw error;const{data}=sb.storage.from('class-materials').getPublicUrl(path);return{url:data.publicUrl,name:f.name}}
+async function saveContent(status){
+ const title=$('title').value.trim(); if(!title)return toast('عنوان را وارد کن.',false);
+ try{
+  const media=await uploadMedia();
+  const kind=$('ct').value==='game'?$('gameKind').value:null;
+  const row={title,description:$('desc').value.trim()||null,content_type:$('ct').value,points:Number($('points').value||0),status,created_by:currentProfile.id,publish_at:localDateToIso($('publishAt').value),deadline_at:localDateToIso($('deadlineAt').value),video_url:$('videoUrl').value.trim()||null,game_url:$('gameUrl').value.trim()||null,game_kind:kind,game_type:kind,game_data:(kind && kind!=='external' && kind!=='number_patterns' && kind!=='fast_math')?customGameQuestions:null,media_url:media.url||null,media_name:media.name||null};
+  let res=editingId?await sb.from('content').update(row).eq('id',editingId):await sb.from('content').insert(row);
+  if(res.error)throw res.error;
+  toast(editingId?'محتوا ویرایش شد 🌸':status==='published'?'محتوا منتشر شد 🌸':'پیش‌نویس ذخیره شد 🌷');
+  resetForm(); await renderContent(); await renderReports();
+ }catch(e){toast('ذخیره محتوا ناموفق بود: '+e.message,false)}
+}
+const customGameQuestions=[];
+function gameKindChanged(){
+ const kind=$('gameKind').value, box=$('customGameBuilder'), extra=$('customExtra');
+ const internal=['multiply','divide','geometry','mcq','tf','sentence'].includes(kind);
+ box.classList.toggle('hidden',!internal);
+ $('gameUrl').classList.toggle('hidden',kind!=='external');
+ if(!internal){customGameQuestions.length=0;$('customQuestionList').innerHTML='';return}
+ let x='';
+ if(kind==='mcq')x=`<div class="field"><label>گزینه ۱</label><input id="cg1" class="input"></div><div class="field"><label>گزینه ۲</label><input id="cg2" class="input"></div><div class="field"><label>گزینه ۳</label><input id="cg3" class="input"></div><div class="field"><label>گزینه ۴</label><input id="cg4" class="input"></div><div class="field"><label>گزینه صحیح</label><select id="cgans" class="select"><option value="0">۱</option><option value="1">۲</option><option value="2">۳</option><option value="3">۴</option></select></div>`;
+ else if(kind==='tf')x=`<div class="field"><label>پاسخ صحیح</label><select id="cgans" class="select"><option value="true">درست</option><option value="false">نادرست</option></select></div>`;
+ else if(kind==='sentence')x=`<div class="field"><label>کلمه/عبارت مورد انتظار</label><input id="cgans" class="input" placeholder="مثلاً: کتاب"></div>`;
+ else x=`<div class="field"><label>پاسخ صحیح</label><input id="cgans" class="input" placeholder="پاسخ را وارد کنید"></div>`;
+ extra.innerHTML=x;
+}
+function addCustomQuestion(){
+ const q=$('customQ').value.trim(), kind=$('gameKind').value;
+ if(!q)return toast('متن سؤال را وارد کن.',false);
+ const item={q,answer:$('cgans')?.value||''};
+ if(kind==='mcq')item.options=[$('cg1').value,$('cg2').value,$('cg3').value,$('cg4').value];
+ customGameQuestions.push(item);
+ $('customQuestionList').innerHTML=customGameQuestions.map((x,i)=>`<div class="game-box" style="text-align:right"><b>${i+1}. ${esc(x.q)}</b><div class="muted">${x.options?x.options.join(' | '):'پاسخ ثبت شد'}</div></div>`).join('');
+ $('customQ').value='';
+}
+function resetForm(){editingId=null;customGameQuestions.length=0;selectedMediaUrl=null;selectedMediaName=null;$('editBadge').classList.add('hidden');$('cancelEdit').classList.add('hidden');['title','desc','publishAt','deadlineAt','videoUrl','gameUrl'].forEach(id=>$(id).value='');$('points').value=10;$('ct').value='homework';$('gameKind').value='number_patterns';$('mediaFile').value='';$('fileInfo').textContent='هنوز فایلی انتخاب نشده است.';$('imagePreview').classList.add('hidden');$('customQuestionList').innerHTML='';contentTypeChanged();gameKindChanged()}
+async function editContent(id){const{data,error}=await sb.from('content').select('*').eq('id',id).single();if(error)return toast('خواندن محتوا ناموفق بود: '+error.message,false);editingId=id;selectedMediaUrl=data.media_url;selectedMediaName=data.media_name;$('editBadge').classList.remove('hidden');$('cancelEdit').classList.remove('hidden');$('ct').value=data.content_type;$('title').value=data.title||'';$('desc').value=data.description||'';$('points').value=data.points||0;$('publishAt').value=toLocalInput(data.publish_at);$('deadlineAt').value=toLocalInput(data.deadline_at);$('videoUrl').value=data.video_url||'';$('gameUrl').value=data.game_url||'';$('gameKind').value=data.game_kind||data.game_type||'number_patterns';customGameQuestions.length=0;if(Array.isArray(data.game_data))customGameQuestions.push(...data.game_data);$('fileInfo').textContent=data.media_name?`فایل فعلی: ${data.media_name}`:'فایل تصویری ندارد';$('imagePreview').classList.toggle('hidden',!data.media_url);if(data.media_url)$('imagePreview').src=data.media_url;contentTypeChanged();gameKindChanged();$('customQuestionList').innerHTML=customGameQuestions.map((x,i)=>`<div class="game-box"><b>${i+1}. ${esc(x.q)}</b></div>`).join('');window.scrollTo({top:0,behavior:'smooth'})}
+async function renderContent(){const{data,error}=await sb.from('content').select('id,title,description,content_type,points,status,publish_at,deadline_at,video_url,game_url,game_kind,game_type,game_data,media_url,media_name,created_at').order('created_at',{ascending:false});if(error)return toast('خواندن محتوا ناموفق بود: '+error.message,false);$('cc').textContent=data.length;$('cl').innerHTML=data.map(c=>`<div class="content-card"><div class="section-title"><div><b>${typeFa(c.content_type)}: ${esc(c.title)}</b><div class="muted">${esc(c.description||'')} · ${c.status==='published'?'منتشرشده':'پیش‌نویس'} · ${c.points} امتیاز</div></div><span class="pill">${c.media_url?'🖼️ فایل دارد':''}${c.video_url?' 🎬 ویدئو':''}${c.content_type==='game'?' 🎮 بازی':''}</span></div><div class="actions"><button class="btn purple" onclick="editContent('${c.id}')">✏️ ویرایش</button><button class="btn red" onclick="deleteContent('${c.id}')">🗑️ حذف</button></div></div>`).join('')||'<p class="muted">محتوایی ثبت نشده است.</p>'}
+async function deleteContent(id){if(!confirm('این محتوا حذف شود؟'))return;const{error}=await sb.from('content').delete().eq('id',id);if(error)return toast('حذف ناموفق بود: '+error.message,false);await renderContent();toast('محتوا حذف شد.')}
+
+const testQuestions=[];
+let activeAttempt=null, activeTestQuestions=[];
+function testQuestionTypeChanged(){
+ const t=$('testQType').value, box=$('testQExtra');
+ if(t==='multiple_choice'){
+   box.innerHTML=`<input id="topt1" class="input" placeholder="گزینه ۱"><input id="topt2" class="input" placeholder="گزینه ۲"><input id="topt3" class="input" placeholder="گزینه ۳"><input id="topt4" class="input" placeholder="گزینه ۴"><select id="tcorrect" class="select"><option value="0">پاسخ صحیح: گزینه ۱</option><option value="1">پاسخ صحیح: گزینه ۲</option><option value="2">پاسخ صحیح: گزینه ۳</option><option value="3">پاسخ صحیح: گزینه ۴</option></select>`;
+ }else if(t==='true_false'){
+   box.innerHTML=`<select id="tcorrect" class="select"><option value="true">پاسخ صحیح: درست</option><option value="false">پاسخ صحیح: نادرست</option></select>`;
+ }else box.innerHTML=`<p class="muted">پاسخ این سؤال بعداً توسط معلم بررسی و نمره‌دهی می‌شود.</p>`;
+}
+function addTestQuestion(){
+ const text=$('testQText').value.trim(), type=$('testQType').value, score=Number($('testQScore').value||1);
+ if(!text)return toast('متن سؤال را وارد کن.',false);
+ const q={question_text:text,question_type:type,score,options:null,correct_answer:null};
+ if(type==='multiple_choice'){q.options=[$('topt1').value,$('topt2').value,$('topt3').value,$('topt4').value];if(q.options.some(x=>!x))return toast('هر چهار گزینه را وارد کن.',false);q.correct_answer=$('tcorrect').value}
+ if(type==='true_false')q.correct_answer=$('tcorrect').value;
+ testQuestions.push(q);
+ $('testQuestionList').innerHTML=testQuestions.map((x,i)=>`<div class="game-box" style="text-align:right"><b>${i+1}. ${esc(x.question_text)}</b><div class="muted">${x.question_type==='multiple_choice'?'چهارگزینه‌ای':x.question_type==='true_false'?'درست/نادرست':'تشریحی'} · ${x.score} نمره</div></div>`).join('');
+ $('testQText').value='';testQuestionTypeChanged();
+}
+async function saveTestDraft(){await createTest('draft')}
+async function publishTest(){await createTest('published')}
+async function createTest(status){
+ const title=$('testTitle').value.trim();
+ if(!title)return toast('عنوان آزمون را وارد کن.',false);
+ if(!testQuestions.length)return toast('حداقل یک سؤال اضافه کن.',false);
+ const total=Number($('testScore').value||testQuestions.reduce((a,q)=>a+q.score,0));
+ const payload={p_title:title,p_description:$('testDesc').value.trim()||null,p_time_limit_minutes:Number($('testMinutes').value||0)||null,p_total_score:total,p_status:status,p_publish_at:localDateToIso($('testPublishAt').value),p_deadline_at:localDateToIso($('testDeadline').value),p_questions:testQuestions};
+ const {data,error}=await sb.rpc('create_test_with_questions',payload);
+ if(error)return toast('ساخت آزمون ناموفق بود: '+error.message,false);
+ toast(status==='published'?'آزمون منتشر شد 🌸':'پیش‌نویس آزمون ذخیره شد 🌷');
+ testQuestions.length=0;$('testQuestionList').innerHTML='';['testTitle','testDesc','testMinutes','testPublishAt','testDeadline'].forEach(id=>$(id).value='');$('testScore').value=0;testQuestionTypeChanged();await renderTests();
+}
+function resetTestBuilder(){testQuestions.length=0;$('testQuestionList').innerHTML='';}
+async function renderStudentTests(){
+ const {data,error}=await sb.from('tests').select('id,title,description,time_limit_minutes,total_score,publish_at,deadline_at').eq('status','published').order('created_at',{ascending:false});
+ if(error)return toast('خواندن آزمون‌ها ناموفق بود: '+error.message,false);
+ $('studentTestList').innerHTML=(data||[]).map(t=>`<div class="content-card"><div><b>🧠 ${esc(t.title)}</b><div class="muted">${esc(t.description||'')} · ${t.total_score} نمره${t.time_limit_minutes?` · ${t.time_limit_minutes} دقیقه`:''}</div></div><button class="btn purple" onclick="startTest('${t.id}')">شروع آزمون ✏️</button></div>`).join('')||'<p class="muted">فعلاً آزمون منتشرشده‌ای ندارید. 🌷</p>';
+}
+async function startTest(id){
+ const {data:test,error}=await sb.from('tests').select('*').eq('id',id).single(); if(error)return toast('آزمون باز نشد: '+error.message,false);
+ const {data:qs,error:qerr}=await sb.from('test_questions').select('id,question_order,question_text,question_type,options,score').eq('test_id',id).order('question_order');
+ if(qerr)return toast('سؤال‌ها باز نشدند: '+qerr.message,false);
+ const {data:attempt,error:aerr}=await sb.from('test_attempts').insert({test_id:id,student_id:currentProfile.id}).select('id').single();
+ if(aerr)return toast('شروع آزمون ناموفق بود: '+aerr.message,false);
+ activeAttempt={id:attempt.id,test,started:Date.now()};activeTestQuestions=qs||[];
+ $('viewerTitle').textContent='🧠 '+test.title;$('viewerBody').innerHTML=renderTestRunner(test,activeTestQuestions);$('viewer').classList.remove('hidden');
+ if(test.time_limit_minutes)setTimeout(()=>{if(activeAttempt?.id===attempt.id)submitTest(true)},test.time_limit_minutes*60000);
+}
+function renderTestRunner(test,qs){
+ let h=`<div class="game-box"><div class="game-top"><span class="game-badge">🧠 ${qs.length} سؤال</span>${test.time_limit_minutes?`<span class="game-badge">⏱️ ${test.time_limit_minutes} دقیقه</span>`:''}<span class="game-badge">⭐ ${test.total_score} نمره</span></div>`;
+ qs.forEach((q,i)=>{
+   h+=`<div class="game-box" style="text-align:right"><b>${i+1}. ${esc(q.question_text)}</b><div class="muted">${q.score} نمره</div>`;
+   if(q.question_type==='multiple_choice')h+=`<div class="game-options">${(q.options||[]).map((o,j)=>`<label style="background:#fff;padding:12px;border-radius:12px"><input type="radio" name="ans-${q.id}" value="${j}"> ${esc(o)}</label>`).join('')}</div>`;
+   else if(q.question_type==='true_false')h+=`<div class="game-options"><label><input type="radio" name="ans-${q.id}" value="true"> درست ✅</label><label><input type="radio" name="ans-${q.id}" value="false"> نادرست ❌</label></div>`;
+   else h+=`<textarea id="essay-${q.id}" class="area" placeholder="پاسخ خود را بنویسید..."></textarea>`;
+   h+=`</div>`;
+ });
+ h+=`<button class="btn green" onclick="submitTest(false)">🌸 ارسال آزمون</button></div>`;return h;
+}
+async function submitTest(auto){
+ if(!activeAttempt)return;
+ for(const q of activeTestQuestions){
+   let answer='';
+   if(q.question_type==='essay')answer=$('essay-'+q.id)?.value||'';
+   else {const el=document.querySelector(`input[name="ans-${q.id}"]:checked`);answer=el?el.value:''}
+   await sb.from('test_answers').upsert({attempt_id:activeAttempt.id,question_id:q.id,answer_text:answer},{onConflict:'attempt_id,question_id'});
+ }
+ const {data,error}=await sb.rpc('submit_and_score_test',{p_attempt_id:activeAttempt.id});
+ if(error)return toast('ارسال آزمون ناموفق بود: '+error.message,false);
+ const result=data?.[0]||data;
+ closeViewer();activeAttempt=null;
+ toast(auto?'زمان آزمون تمام شد و پاسخ‌ها ارسال شدند.':'آزمون با موفقیت ارسال شد. 🌷');
+ if(result) setTimeout(()=>alert(`نتیجه آزمون\\nامتیاز: ${result.score} از ${result.max_score}`),100);
+ await renderStudentTests();
+}
+async function renderTests(){const{data,error}=await sb.from('tests').select('id,title,description,time_limit_minutes,total_score,status,publish_at,deadline_at').order('created_at',{ascending:false});if(error)return toast('خواندن آزمون‌ها ناموفق بود: '+error.message,false);$('tc').textContent=data.length;$('tl').innerHTML=data.map(t=>`<div class="row"><div><b>${esc(t.title)}</b><div class="muted">${t.total_score} نمره · ${t.time_limit_minutes||'—'} دقیقه · ${t.status==='published'?'منتشرشده':'پیش‌نویس'}</div></div></div>`).join('')||'<p class="muted">هنوز آزمونی ثبت نشده است.</p>'}
+async function renderReports(){const[{data:content},{data:students},{data:progress},{data:tests}]=await Promise.all([sb.from('content').select('id,content_type'),sb.from('profiles').select('id').eq('role','student'),sb.from('content_progress').select('id,status'),sb.from('tests').select('id')]);$('sc').textContent=students?.length??'—';$('cc').textContent=content?.length??'—';$('tc').textContent=tests?.length??'—';$('pc').textContent=progress?.filter(x=>x.status==='completed').length??0;$('rHomework').textContent=(content||[]).filter(x=>x.content_type==='homework').length;$('rVideo').textContent=(content||[]).filter(x=>x.content_type==='video').length;$('rTests').textContent=(tests||[]).length;$('rAll').textContent=(content||[]).length+(tests||[]).length}
+async function renderStudent(){const{data:content,error}=await sb.from('content').select('id,title,description,content_type,points,publish_at,deadline_at,video_url,game_url,game_kind,media_url,media_name').eq('status','published').order('created_at',{ascending:false});if(error)return toast('خواندن فعالیت‌ها ناموفق بود: '+error.message,false);const{data:progress}=await sb.from('content_progress').select('content_id,status,progress_percent,watched_seconds,attempt_count').eq('student_id',currentProfile.id);const pm=new Map((progress||[]).map(x=>[x.content_id,x]));const html=(content||[]).map(c=>{const p=pm.get(c.id);return `<div class="content-card"><div><b>${typeFa(c.content_type)}: ${esc(c.title)}</b><div class="muted">${esc(c.description||'')} · ${c.points} امتیاز</div></div><button class="btn green" onclick="openContent('${c.id}')">${p?.status==='completed'?'✓ مشاهده دوباره':'شروع فعالیت 🌱'}</button></div>`}).join('')||'<p>فعلاً فعالیت منتشرشده‌ای وجود ندارد. 🌷</p>';$('studentContent').innerHTML=html;$('todayList').innerHTML=html;$('progressBox').innerHTML=`<p>فعالیت‌های کامل‌شده: <b>${(progress||[]).filter(x=>x.status==='completed').length}</b></p><p>فعالیت‌های شروع‌شده: <b>${(progress||[]).filter(x=>x.status==='started').length}</b></p><p>هر فعالیت کامل‌شده امتیاز خودش را دارد. 🌟</p>`}
+async function openContent(id){const{data,error}=await sb.from('content').select('*').eq('id',id).single();if(error)return toast('محتوا باز نشد: '+error.message,false);$('viewerTitle').textContent=data.title;$('viewerBody').innerHTML=renderViewer(data);$('viewer').classList.remove('hidden')}
+function renderViewer(c){let h=`<p>${esc(c.description||'')}</p>`;if(c.media_url){if(c.media_name&&/\.(pdf)$/i.test(c.media_name))h+=`<div class="media-box"><iframe src="${esc(c.media_url)}" style="width:100%;height:430px;border:0;border-radius:14px"></iframe></div>`;else if(c.media_name&&/\.(mp3|wav|m4a|ogg)$/i.test(c.media_name))h+=`<div class="media-box"><audio controls style="width:100%" src="${esc(c.media_url)}"></audio></div>`;else h+=`<div class="media-box"><img class="preview" src="${esc(c.media_url)}" alt="${esc(c.media_name||'تصویر آموزشی')}"><div class="muted">${esc(c.media_name||'تصویر آموزشی')}</div></div>`}if(c.video_url)h+=`<div class="media-box"><h3>🎬 ویدئوی آموزشی</h3><p><a href="${esc(c.video_url)}" target="_blank" rel="noopener">باز کردن ویدئو ↗</a></p><iframe src="${esc(toEmbedUrl(c.video_url))}" style="width:100%;height:320px;border:0;border-radius:14px" allowfullscreen></iframe></div>`;if(c.content_type==='game'){if(c.game_kind==='external'&&c.game_url)h+=`<div class="media-box"><h3>🎮 بازی</h3><iframe src="${esc(c.game_url)}" style="width:100%;height:500px;border:0;border-radius:14px"></iframe><p><a href="${esc(c.game_url)}" target="_blank" rel="noopener">اگر بازی باز نشد، اینجا بازش کن ↗</a></p></div>`;else if(c.game_kind==='fast_math')h+=mathGameHtml(c.id);else h+=patternGameHtml(c.id)}if(c.content_type!=='game')h+=`<button class="btn green" onclick="completeContent('${c.id}')">🌟 انجام شد؛ ثبت فعالیت</button>`;return h}
+
+function patternGameHtml(id){
+  return `<div class="game-box" id="game-${id}">
+    <h3>🎮 بازی الگوهای عددی</h3>
+    <div class="game-top"><span class="game-badge">سؤال <b id="gq-${id}">1</b> از 5</span><span class="game-badge">⭐ امتیاز <b id="gs-${id}">0</b></span><span class="game-badge">⏱️ <b id="gt-${id}">0</b> ثانیه</span></div>
+    <div class="game-progress"><span id="gp-${id}"></span></div>
+    <div id="pg-${id}" class="game-number">برای شروع روی دکمه بزن 🌷</div>
+    <button class="btn purple" id="startp-${id}" onclick="startPatternGame('${id}')">شروع بازی 🎮</button>
+    <div id="po-${id}" class="game-options"></div>
+    <div id="pr-${id}" class="game-result muted"></div>
+  </div>`;
+}
+function mathGameHtml(id){
+  return `<div class="game-box" id="game-${id}">
+    <h3>🎮 بازی جمع و تفریق سریع</h3>
+    <div class="game-top"><span class="game-badge">سؤال <b id="gq-${id}">1</b> از 5</span><span class="game-badge">⭐ امتیاز <b id="gs-${id}">0</b></span><span class="game-badge">⏱️ <b id="gt-${id}">0</b> ثانیه</span></div>
+    <div class="game-progress"><span id="gp-${id}"></span></div>
+    <div id="mq-${id}" class="game-number">برای شروع روی دکمه بزن 🌷</div>
+    <button class="btn purple" id="startm-${id}" onclick="startMathGame('${id}')">شروع بازی 🎮</button>
+    <div class="game-options" id="mo-${id}"></div>
+    <div id="mr-${id}" class="game-result muted"></div>
+  </div>`;
+}
+const gameState={};
+function makePatternQuestion(){
+  const step=Math.floor(Math.random()*5)+2, start=Math.floor(Math.random()*10)+1;
+  const nums=[start,start+step,start+2*step,start+3*step], ans=start+4*step;
+  const opts=[ans,ans+step,ans-step,ans+2].filter((v,i,a)=>a.indexOf(v)===i);
+  while(opts.length<4) opts.push(ans+opts.length+3);
+  return {text:nums.join('، ')+'، ؟',ans,opts:opts.sort(()=>Math.random()-.5)};
+}
+function makeMathQuestion(){
+  const a=Math.floor(Math.random()*20)+1,b=Math.floor(Math.random()*20)+1,plus=Math.random()>.45;
+  const ans=plus?a+b:a-b;
+  const vals=[ans,ans+1,ans-1,ans+2].filter((v,i,a)=>a.indexOf(v)===i);
+  while(vals.length<4) vals.push(ans+vals.length+2);
+  return {text:`${a} ${plus?'+':'−'} ${b} = ؟`,ans,opts:vals.sort(()=>Math.random()-.5)};
+}
+function beginGame(id,kind){
+  gameState[id]={q:0,score:0,correct:0,start:Date.now(),kind,questions:5,locked:false};
+  const startBtn=$('start'+(kind==='pattern'?'p':'m')+'-'+id); if(startBtn) startBtn.classList.add('hidden');
+  $('pr-'+id).textContent='';
+  nextGameQuestion(id);
+  gameState[id].timer=setInterval(()=>{const s=Math.floor((Date.now()-gameState[id].start)/1000);$('gt-'+id).textContent=s},500);
+}
+function startPatternGame(id){beginGame(id,'pattern')}
+function startMathGame(id){beginGame(id,'math')}
+function nextGameQuestion(id){
+  const st=gameState[id]; if(!st)return;
+  st.locked=false;
+  if(st.q>=st.questions)return finishGame(id);
+  st.current=st.kind==='pattern'?makePatternQuestion():makeMathQuestion();
+  $('gq-'+id).textContent=st.q+1;$('gs-'+id).textContent=st.score;$('gp-'+id).style.width=(st.q/st.questions*100)+'%';
+  const textEl=$(st.kind==='pattern'?'pg-':'mq-'); textEl.textContent=st.current.text;
+  const box=$(st.kind==='pattern'?'po-':'mo-');
+  box.innerHTML=st.current.opts.map(x=>`<button onclick="answerGame('${id}',${x})">${x}</button>`).join('');
+}
+function answerGame(id,value){
+  const st=gameState[id]; if(!st||st.locked)return; st.locked=true;
+  const buttons=$(st.kind==='pattern'?'po-':'mo-').querySelectorAll('button');buttons.forEach(b=>b.disabled=true);
+  if(value===st.current.ans){st.correct++;st.score+=20; $('pr-'+id).textContent='آفرین! پاسخ درست بود 🌟';}
+  else {$('pr-'+id).textContent=`پاسخ درست: ${st.current.ans} 💡`;}
+  st.q++; $('gs-'+id).textContent=st.score;
+  setTimeout(()=>nextGameQuestion(id),650);
+}
+async function finishGame(id){
+  const st=gameState[id]; if(!st||st.finished)return;
+  st.finished=true; clearInterval(st.timer);
+  const seconds=Math.max(1,Math.floor((Date.now()-st.start)/1000));
+  $('gp-'+id).style.width='100%';
+  $('po-'+id).innerHTML='';
+  $('pr-'+id).innerHTML=`🌟 <b>بازی تمام شد!</b><br>امتیاز: <b>${st.score} از 100</b><br>پاسخ درست: <b>${st.correct} از 5</b><br>زمان: <b>${seconds} ثانیه</b>`;
+  $('gs-'+id).textContent=st.score;
+  $('gq-'+id).textContent=5;
+  await saveGameResult(id,st.score,st.correct,seconds);
+}
+async function saveGameResult(id,score,correct,seconds){
+  const {data:old}=await sb.from('content_progress').select('*').eq('content_id',id).eq('student_id',currentProfile.id).maybeSingle();
+  const payload={content_id:id,student_id:currentProfile.id,status:'completed',progress_percent:100,attempt_count:(old?.attempt_count||0)+1,last_activity_at:new Date().toISOString(),completed_at:new Date().toISOString(),game_score:score,game_correct:correct,game_time_seconds:seconds};
+  const {error}=await sb.from('content_progress').upsert(payload,{onConflict:'content_id,student_id'});
+  if(error){toast('نتیجه بازی ثبت نشد: '+error.message,false);return}
+  toast(`آفرین! ${score} امتیاز گرفتی 🌟`);
+  await renderStudent();
+}
+function closeViewer(){$('viewer').classList.add('hidden');$('viewerBody').innerHTML=''}
+function toEmbedUrl(url){try{const u=new URL(url);if(u.hostname.includes('youtube.com')){const v=u.searchParams.get('v');return v?'https://www.youtube.com/embed/'+v:url}if(u.hostname==='youtu.be')return 'https://www.youtube.com/embed/'+u.pathname.slice(1);return url}catch{return url}}
+function localDateToIso(v){return v?new Date(v).toISOString():null}
+function toLocalInput(v){if(!v)return '';const d=new Date(v);const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`}
+function typeFa(t){return{homework:'تکلیف',video:'ویدئو',game:'بازی',lesson:'درس',material:'مطلب'}[t]||t}
+function esc(s){return String(s??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
+contentTypeChanged();init();
+</script>
+<script>document.addEventListener('click',e=>{if(e.target.id==='studentModal')closeStudentModal();if(e.target.id==='addStudentModal')closeAddStudent()})</script></body></html>
