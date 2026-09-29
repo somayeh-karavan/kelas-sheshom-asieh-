@@ -186,7 +186,9 @@ renderGameBuilder();testQuestionTypeChanged();
 let sb=null,currentProfile=null,currentRole=null,editingId=null,selectedMediaUrl=null,selectedMediaName=null;
 const $=id=>document.getElementById(id);
 function toast(msg,ok=true){const t=$('toast');t.textContent=msg;t.className='toast '+(ok?'ok':'err');clearTimeout(window._toast);window._toast=setTimeout(()=>t.classList.add('hidden'),4000)}
-function getConfig(){return{url:localStorage.getItem('asieh_supabase_url')||'',key:localStorage.getItem('asieh_supabase_key')||''}}
+const DEFAULT_SUPABASE_URL='https://epizjajpmiraiffyeleq.supabase.co';
+const DEFAULT_SUPABASE_KEY='sb_publishable_rGuAVMVkAbnoMBl8dlW-pw_lkwEyd-1';
+function getConfig(){return{url:DEFAULT_SUPABASE_URL,key:DEFAULT_SUPABASE_KEY}}
 function init(){const c=getConfig();if(c.url&&c.key){sb=supabase.createClient(c.url,c.key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});$('login').classList.remove('hidden');resume()}else $('setup').classList.remove('hidden')}
 function showSetup(){$('login').classList.add('hidden');$('setup').classList.remove('hidden');const c=getConfig();$('cfgUrl').value=c.url;$('cfgKey').value=c.key}
 function saveConfig(){const url=$('cfgUrl').value.trim(),key=$('cfgKey').value.trim();if(!url||!key)return toast('هر دو مقدار را وارد کن.',false);if(!url.startsWith('https://'))return toast('Project URL باید با https:// شروع شود.',false);if(key.startsWith('sb_secret_'))return toast('کلید secret را وارد نکن. Publishable Key لازم است.',false);localStorage.setItem('asieh_supabase_url',url);localStorage.setItem('asieh_supabase_key',key);sb=supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});$('setup').classList.add('hidden');$('login').classList.remove('hidden');toast('اتصال تنظیم شد. حالا وارد حساب شو.')}
