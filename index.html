@@ -69,7 +69,26 @@ renderGameBuilder();testQuestionTypeChanged();
 <div class="danger-note">🔐 کلید <b>sb_secret_...</b> را اینجا وارد نکن. این برنامه فقط به Publishable Key نیاز دارد.</div>
 </section>
 
-<section id="login" class="card hidden"><div class="grid"><div><h2>👩🏻‍🏫 ورود معلم</h2><input id="loginEmail" class="input" type="email" placeholder="ایمیل ورود"><input id="loginPass" class="input" type="password" placeholder="رمز عبور"><button class="btn purple" onclick="login()">ورود به کلاس 🌸</button><p class="muted">حساب معلمی ساخته‌شده در Supabase را وارد کن.</p></div><div><h2>👧🏻 دانش‌آموز</h2><p>دانش‌آموز با حساب Auth خودش وارد می‌شود و فقط محتوای مجاز کلاس را می‌بیند.</p><span class="pill">نسخه متصل به دیتابیس واقعی</span></div></div><button class="btn blue" onclick="showSetup()">⚙️ تغییر تنظیمات اتصال</button></section>
+<section id="login" class="card hidden">
+<div class="grid">
+  <div>
+    <h2>👩🏻‍🏫 ورود معلم</h2>
+    <input id="loginEmail" class="input" type="email" placeholder="ایمیل ورود" autocomplete="username">
+    <input id="loginPass" class="input" type="password" placeholder="رمز عبور" autocomplete="current-password">
+    <button class="btn purple" onclick="login()">ورود به کلاس 🌸</button>
+    <p class="muted">حساب معلمی ساخته‌شده در Supabase را وارد کن.</p>
+  </div>
+  <div>
+    <h2>👧🏻 ورود دانش‌آموز</h2>
+    <input id="studentLoginUsername" class="input" type="text" placeholder="نام کاربری دانش‌آموز" autocomplete="username" autocapitalize="none">
+    <input id="studentLoginPass" class="input" type="password" placeholder="رمز عبور دانش‌آموز" autocomplete="current-password">
+    <button class="btn green" onclick="studentLogin()">ورود دانش‌آموز 🌷</button>
+    <p class="muted">نام کاربری و رمز را از معلم دریافت کن.</p>
+  </div>
+</div>
+<div class="hint" style="margin-top:14px">🌱 هر دانش‌آموز با حساب اختصاصی خودش وارد می‌شود و فقط محتوای مجاز کلاس را می‌بیند.</div>
+<button class="btn blue" onclick="showSetup()">⚙️ تغییر تنظیمات اتصال</button>
+</section>
 
 <section id="app" class="hidden"><div class="card"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><div><h2 id="hello"></h2><span id="sub" class="muted"></span></div><button class="btn red" onclick="logout()">خروج</button></div>
 <div id="tn" class="nav hidden"><button onclick="tab('home',this)" class="active">🏠 خانه</button><button onclick="tab('students',this)">👧 دانش‌آموزان</button><button onclick="tab('content',this)">📚 محتوا</button><button onclick="tab('tests',this)">🧠 آزمون‌ها</button><button onclick="tab('reports',this)">📊 گزارش‌ها</button></div>
@@ -193,7 +212,8 @@ function init(){const c=getConfig();if(c.url&&c.key){sb=supabase.createClient(c.
 function showSetup(){$('login').classList.add('hidden');$('setup').classList.remove('hidden');const c=getConfig();$('cfgUrl').value=c.url;$('cfgKey').value=c.key}
 function saveConfig(){const url=$('cfgUrl').value.trim(),key=$('cfgKey').value.trim();if(!url||!key)return toast('هر دو مقدار را وارد کن.',false);if(!url.startsWith('https://'))return toast('Project URL باید با https:// شروع شود.',false);if(key.startsWith('sb_secret_'))return toast('کلید secret را وارد نکن. Publishable Key لازم است.',false);localStorage.setItem('asieh_supabase_url',url);localStorage.setItem('asieh_supabase_key',key);sb=supabase.createClient(url,key,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false}});$('setup').classList.add('hidden');$('login').classList.remove('hidden');toast('اتصال تنظیم شد. حالا وارد حساب شو.')}
 function clearConfig(){localStorage.removeItem('asieh_supabase_url');localStorage.removeItem('asieh_supabase_key');location.reload()}
-async function login(){const email=$('loginEmail').value.trim(),password=$('loginPass').value;if(!email||!password)return toast('ایمیل و رمز عبور را وارد کن.',false);const{data,error}=await sb.auth.signInWithPassword({email,password});if(error)return toast('ورود انجام نشد: '+error.message,false);await loadSession(data.user)}
+async function login(){const email=$('loginEmail').value.trim(),password=$('loginPass').value;if(!email||!password)return toast('ایمیل و رمز عبور را وارد کن.',false);const{data,error}=await sb.auth.signInWithPassword({email,password});if(error)return toast('ورود معلم انجام نشد: '+error.message,false);await loadSession(data.user)}
+async function studentLogin(){const username=$('studentLoginUsername').value.trim().toLowerCase(),password=$('studentLoginPass').value;if(!username||!password)return toast('نام کاربری و رمز عبور دانش‌آموز را وارد کن.',false);if(!/^[a-z0-9_]{3,30}$/.test(username))return toast('نام کاربری معتبر نیست.',false);const email=`${username}@students.asieh.local`;const{data,error}=await sb.auth.signInWithPassword({email,password});if(error)return toast('ورود دانش‌آموز انجام نشد. نام کاربری یا رمز عبور را بررسی کن.',false);await loadSession(data.user)}
 async function resume(){const{data}=await sb.auth.getSession();if(data.session)await loadSession(data.session.user)}
 async function loadSession(user){const{data,error}=await sb.from('profiles').select('id,username,full_name,role,is_active').eq('id',user.id).single();if(error)return toast('پروفایل کاربر پیدا نشد: '+error.message,false);if(!data.is_active)return toast('این حساب غیرفعال است.',false);currentProfile=data;currentRole=data.role;$('login').classList.add('hidden');$('setup').classList.add('hidden');$('app').classList.remove('hidden');$('hello').textContent='سلام '+(data.full_name||data.username||'دوست من')+' 🌷';$('sub').textContent=data.role==='teacher'?'پنل مدیریت کلاس':'پنل شخصی دانش‌آموز';$('tn').classList.toggle('hidden',data.role!=='teacher');$('sn').classList.toggle('hidden',data.role!=='student');$('statusText').textContent='اتصال موفق است و اطلاعات از Supabase خوانده می‌شود. 🌱';if(data.role==='teacher'){tab('home');await renderTeacher()}else{tab('today');await renderStudent()}}
 async function logout(){await sb.auth.signOut();location.reload()}
